@@ -4,7 +4,7 @@ import userModel from "../models/userModel.js";
 const router = Router();
 
 // Consultar todos los usuarios
-
+router.get;
 // Crear un usuario
 
 // Actualizar un usuario
