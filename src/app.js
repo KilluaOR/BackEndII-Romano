@@ -1,6 +1,7 @@
 import express from "express";
 import mongoose from "mongoose";
-import usersRouter from "./routes/userRouter.js";
+import usersRouter from "./routes/user.router.js";
+import productsRouter from "./routes/products.router.js";
 
 const app = express();
 const PORT = 8080;
@@ -12,7 +13,12 @@ mongoose.connect(uri);
 app.use(express.json()); // Formatea los cuerpos json de peticiones entrantes.
 app.use(express.urlencoded({ extended: true })); // Formatea query params de URLs para peticiones entrantes.
 
+app.get("/setcookies", (req, res) => {
+  res.cookie("");
+});
+
 app.use("/api/users", usersRouter);
+app.use("/api/products", productsRouter);
 
 try {
   app.listen(PORT, () => {
