@@ -1,5 +1,7 @@
 import express from "express";
+import sessions from "express-session";
 import mongoose from "mongoose";
+import MongoStore from "connect-mongo";
 import usersRouter from "./routes/user.router.js";
 import productsRouter from "./routes/products.router.js";
 
