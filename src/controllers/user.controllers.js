@@ -1,4 +1,17 @@
 import mongoose from "mongoose";
-import UserModel from "../dao/models/user.model.js";
+import userModel from "../dao/models/user.model.js";
 
-export const getUserControllers = async (req, res) => {};
+export const getUserControllers = async (req, res) => {
+  try {
+    const result = await userModel.find();
+    res.send({
+      status: "success",
+      payload: result,
+    });
+  } catch (error) {
+    res.status(500).send({
+      status: "error",
+      message: error.message,
+    });
+  }
+};
