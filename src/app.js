@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 import MongoStore from "connect-mongo";
 import usersRouter from "./routes/user.router.js";
 import productsRouter from "./routes/products.router.js";
+import { logger } from "./middlewares/logger.js";
 
 const app = express();
 const PORT = 8080;
@@ -14,6 +15,7 @@ mongoose.connect(uri);
 // Middlewares incorporados de Express
 app.use(express.json()); // Formatea los cuerpos json de peticiones entrantes.
 app.use(express.urlencoded({ extended: true })); // Formatea query params de URLs para peticiones entrantes.
+app.use(logger);
 
 app.get("/setcookies", (req, res) => {
   res.cookie("");

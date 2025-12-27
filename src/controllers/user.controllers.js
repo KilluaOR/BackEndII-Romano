@@ -1,12 +1,9 @@
 import mongoose from "mongoose";
-import UserModel from "../dao/models/user.model.js";
-import UserManager from "../dao/managers/UserManager.js";
-
-const userManager = new UserManager();
+import userModel from "../dao/models/user.model.js";
 
 export const getUserControllers = async (req, res) => {
   try {
-    const result = await UserModel.find();
+    const result = await userModel.find();
     res.send({
       status: "success",
       payload: result,
@@ -20,46 +17,42 @@ export const getUserControllers = async (req, res) => {
 };
 
 export const createUserControllers = async (req, res) => {
+  const { name, age, email } = req.body;
   try {
-    const newUser = await userManager.createUser();
-    res.setHeader("Content-Type", "application/json");
-    return res.status(201).json(newUser);
+    const result = await userModel.create({ name, age, email });
+    res.send({
+      status: "success",
+      payload: result,
+    });
   } catch (error) {
-    console.log(error);
-    res.setHeader("Content-Type", "application/json");
-    return res.status(500).json({
-      error: `Error inesperado en el servidor - Intente más tarde, o contacte a su administrador`,
-      detalle: `${error.message}`,
+    res.status(400).send({
+      status: "error",
+      message: error.message,
     });
   }
 };
 
 export const updateUserControllers = async (req, res) => {
+  const { name, age, email } = req.body;
   try {
-    const { uid } = req.params;
+    const user = await userModel.findOne({ _id: uid });
+    if (!user) throw new Error("User not found");
 
-    const updatedUser = await UserModel.findByIdAndUpdate(uid, req.body, {
-      new: true,
-      runValidators: true,
-    });
-    if (!updatedUser) {
-      return res.status(400).json({ error: "Usuario no encontrado" });
-    }
-    const io = req.app.get("io");
+    const newUser = {
+      name: name ?? user.name,
+      age: age ?? user.age,
+      email: email ?? user.email,
+    };
 
-    if (io) {
-      const users = await UserModel.find().lean();
-      io.emit("usuarios", users);
-    }
-    res.json({
-      message: "Usuario actualizado con éxito",
-      user: updatedUser,
+    const updateUser = await userModel.updateOne({ _id: uid }, newUser);
+    res.send({
+      status: "success",
+      payload: updateUser,
     });
   } catch (error) {
-    console.error("PUT /:uid error", error);
-    res.status(500).json({
-      error: `Error inesperado en el servidor - Intente más tarde, o contacte a su administrador`,
-      detalle: `${error.message}`,
+    res.status(400).send({
+      status: "error",
+      message: error.message,
     });
   }
 };
@@ -68,23 +61,16 @@ export const deleteUserControllers = async (req, res) => {
   try {
     const { uid } = req.params;
 
-    const deleted = await UserModel.findByIdAndDelete(uid);
+    const result = await userModel.deleteOne({ _id: uid });
 
-    if (!deleted) {
-      return res.status(404).json({ error: "Usuario no encontrado" });
-    }
-
-    const io = req.app.get("io");
-    if (io) {
-      const users = await UserModel.find().lean();
-      io.emit("usuarios", users);
-    }
-    res.json({
-      message: "Usuario eliminado correctamente",
-      deleted,
+    res.status(200).send({
+      status: "success",
+      payload: result,
     });
   } catch (error) {
-    console.error("DELETE /:uid error:", error);
-    res.status(500).json({ error: "Error interno al eliminar el usuario" });
+    res.status(500).send({
+      status: "error",
+      message: error.message,
+    });
   }
 };
