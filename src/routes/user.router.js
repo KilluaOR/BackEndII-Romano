@@ -2,6 +2,7 @@ import { Router } from "express";
 import userModel from "../dao/models/user.model.js";
 import {
   createUserControllers,
+  deleteUserControllers,
   getUserControllers,
   updateUserControllers,
 } from "../controllers/user.controllers.js";
@@ -15,5 +16,6 @@ router.post("/", createUserControllers);
 // Actualizar un usuario
 router.put("/:uid", updateUserControllers);
 // Eliminar un usuario
+router.delete("/:uid", deleteUserControllers);
 
 export default router;

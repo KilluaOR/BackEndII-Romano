@@ -1,12 +1,12 @@
 import mongoose from "mongoose";
-import UserManager from "../dao/managers/UserManager.js";
 import UserModel from "../dao/models/user.model.js";
+import UserManager from "../dao/managers/UserManager.js";
 
 const userManager = new UserManager();
 
 export const getUserControllers = async (req, res) => {
   try {
-    const result = await UserManager.find();
+    const result = await UserModel.find();
     res.send({
       status: "success",
       payload: result,
