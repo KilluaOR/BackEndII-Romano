@@ -1,7 +1,13 @@
 import express from "express";
-import sessions from "express-session";
+import handlebars from "express-handlebars";
+import { __dirname } from "./utils.js";
+import viewsRouter from "./views.router.js/";
+import sessionsRouter from "./routes/session.router.js";
 import mongoose from "mongoose";
 import MongoStore from "connect-mongo";
+import passport from "passport";
+import initializePassport from "./config/passport.config.js";
+import sessions from "express-session";
 import usersRouter from "./routes/user.router.js";
 import productsRouter from "./routes/products.router.js";
 import { logger } from "./middlewares/logger.js";
