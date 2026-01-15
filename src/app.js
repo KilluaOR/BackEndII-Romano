@@ -11,17 +11,38 @@ import sessions from "express-session";
 import usersRouter from "./routes/user.router.js";
 import productsRouter from "./routes/products.router.js";
 import { logger } from "./middlewares/logger.js";
+import cookieParser from "cookie-parser";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const app = express();
 const PORT = 8080;
+
+// Validar que existan las variables de entorno
+if (!process.env.MONGO_URI) {
+  throw new Error("MONGO_URI no está definida en .env");
+}
+if (!process.env.COOKIE_SECRET) {
+  throw new Error("COOKIE_SECRET no está definida en .env");
+}
+if (!process.env.JWT_SECRET) {
+  throw new Error("JWT_SECRET no está definida en .env");
+}
 // Iniciamos la conexión con MongoDB
-const uri = "mongodb://127.0.0.1:27017/class-zero";
-mongoose.connect(uri);
+mongoose.connect(process.env.MONGO_URI);
+
+//Configuramos handlebars
+app.engine("handlebars", handlebars.engine());
+app.set("views", __dirname + "/views");
+app.set("view engine", "handlebars");
 
 // Middlewares incorporados de Express
 app.use(express.json()); // Formatea los cuerpos json de peticiones entrantes.
 app.use(express.urlencoded({ extended: true })); // Formatea query params de URLs para peticiones entrantes.
 app.use(logger);
+
+app.use(cookieParser(process.env.COOKIE_SECRET));
 
 app.get("/setcookies", (req, res) => {
   res.cookie("");
