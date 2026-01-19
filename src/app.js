@@ -1,7 +1,7 @@
 import express from "express";
 import handlebars from "express-handlebars";
 import { __dirname } from "./utils.js";
-import viewsRouter from "./views.router.js/";
+import viewsRouter from "./routes/views.router.js";
 import sessionsRouter from "./routes/session.router.js";
 import mongoose from "mongoose";
 import MongoStore from "connect-mongo";
@@ -32,6 +32,8 @@ if (!process.env.JWT_SECRET) {
 // Iniciamos la conexión con MongoDB
 mongoose.connect(process.env.MONGO_URI);
 
+initializePassport();
+
 //Configuramos handlebars
 app.engine("handlebars", handlebars.engine());
 app.set("views", __dirname + "/views");
@@ -44,9 +46,31 @@ app.use(logger);
 
 app.use(cookieParser(process.env.COOKIE_SECRET));
 
+//Configurar sesiones
+app.use(
+  sessions({
+    secret: process.env.COOKIE_SECRET, //Misma clave q se usó para cookies
+    resave: false, //No guardar sesión si no hay cambios
+    saveUninitialized: false, //No crear sesión hasta que se almacene algo
+    store: MongoStore.create({
+      mongoUrl: process.env.MONGO_URI, //Guardar sessions en mongodb
+      ttl: 3600, //Tirmpo de vida de la sesión en seg(1h)
+    }),
+  })
+);
+
+//Middleware de passport
+app.use(passport.initialize());
+app.use(passport.session());
+
 app.get("/setcookies", (req, res) => {
   res.cookie("");
 });
+
+//Rutas de sesión
+app.use("/api/sessions", sessionsRouter);
+//Rutas de vistas
+app.use("/", viewsRouter);
 
 app.use("/api/users", usersRouter);
 app.use("/api/products", productsRouter);
