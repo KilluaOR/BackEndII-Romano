@@ -1,9 +1,9 @@
-import passport from "passport"
+import passport from "passport";
 
 //Controlador de registro
 export const registerController = passport.authenticate("register", {
     failureRedirect: "/login?error=El usuario ya existe",
-    successRedirect: "/login?succes=Usuario registrado correctamente",
+    successRedirect: "/login?success=Usuario registrado correctamente",
 });
 
 //Controlador de login
@@ -27,9 +27,9 @@ export const githubCallbackController = passport.authenticate("github", {
 export const logoutController = (req, res) => {
     req.session.destroy((err) => {
         if (err) {
-            return res.status(500).json({ error: "Error al cerrar sesión"})
+            return res.status(500).json({ error: "Error al cerrar sesión" });
         }
         res.clearCookie("connect.sid");
         res.redirect("/login");
-    })
+    });
 }
