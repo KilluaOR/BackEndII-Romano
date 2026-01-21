@@ -21,10 +21,17 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "user",
     },
+    age: {
+      type: Number,
+      required: true,
+    },
     password: {
       type: String,
       required: true,
     },
+    cart: {
+      type: ObjectId,
+    }
   },
   {
     timestamps: true,

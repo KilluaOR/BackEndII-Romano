@@ -15,7 +15,7 @@ export const loginController = passport.authenticate("login", {
 //Controlador para iniciar autenticación con GitHub
 export const githubController = passport.authenticate("github", {
     scope: ["user:email"],
-})
+});
 
 //Controlador callback de GitHub
 export const githubCallbackController = passport.authenticate("github", {
