@@ -30,7 +30,8 @@ const userSchema = new mongoose.Schema(
       required: true,
     },
     cart: {
-      type: ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "carts",
     }
   },
   {

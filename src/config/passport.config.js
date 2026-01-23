@@ -3,6 +3,7 @@ import local from "passport-local";
 import GitHubStrategy from "passport-github2";
 import { createHash, isValidPassword } from "../utils.js";
 import userModel from "../dao/models/user.model.js";
+import { JwtStrategy, ExtractJwt } from "passport-jwt"
 
 const initializePassport = () => {
   const LocalStrategy = local.Strategy;
@@ -75,6 +76,50 @@ const initializePassport = () => {
     )
   );
 
+//Estrategia JWT
+passport.use(
+  "jwt",
+  new JwtStrategy(
+    {
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      secretOrKey: process.env.JWT_SECRET,
+    },
+    async (payload, done) => {
+      try {
+        const user = await userModel.findById(payload.id);
+        if (!user) {
+          return done(null, false, { message: "Usuario no encontrado" })
+        } 
+        return done(null, user);
+        } catch (error) {
+          return done(error)
+      }
+    }
+  )
+);
+
+//Estrattegia current para validar usuario desde JWT
+passport.use(
+  "current",
+  new JwtStrategy(
+    {
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+        secretOrKey: process.env.JWT_SECRET,
+    },
+    async (payload, done) => {
+      try {
+        const user = await userModel.findById(payload.id);
+        if (!user) {
+          return done(null, false, { message: "Usuario no encontrado" });
+        }
+        return done(null, user);
+      } catch (error) {
+        return done(error, false, { message: "Token inválido o expirado" })
+      }
+    }
+  )
+);
+
   //Estrategia GitHub
   passport.use(
     "github",
@@ -113,21 +158,6 @@ const initializePassport = () => {
       }
     )
   );
-
-  //Serialización: guardar solo el ID del usuario en la sesión
-  passport.serializeUser((user, done) => {
-    done(null, user._id);
-  });
-
-  //Deserialización: obtener el usuario completo desde el ID
-  passport.deserializeUser(async (id, done) => {
-    try {
-      const user = await userModel.findById(id);
-      done(null, user);
-    } catch (error) {
-      done(error);
-    }
-  });
 };
 
 export default initializePassport;
