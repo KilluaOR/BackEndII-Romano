@@ -98,7 +98,7 @@ passport.use(
   )
 );
 
-//Estrattegia current para validar usuario desde JWT
+//Estrategia current para validar usuario desde JWT
 passport.use(
   "current",
   new JwtStrategy(

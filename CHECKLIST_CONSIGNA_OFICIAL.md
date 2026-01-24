@@ -48,21 +48,25 @@
 
 ### Requisitos:
 - ✅ **Estrategias desarrolladas para el modelo User** - Implementado
-  - Estrategia "register" (línea 11-42)
-  - Estrategia "login" (línea 46-76)
-  - Estrategia "github" (línea 79-115)
+  - Estrategia "register" (línea 12-43)
+  - Estrategia "login" (línea 47-77)
+  - Estrategia "github" (línea 123-160)
+  - Estrategia "jwt" (línea 79-99)
+  - Estrategia "current" (línea 102-121)
 
 - ✅ **Estrategias correctamente configuradas** - Implementado
   - Usan `userModel` para consultas
   - Validan credenciales correctamente
-  - Serialización/Deserialización configuradas (línea 118-130)
+  - Usan `passport-jwt` para autenticación JWT
 
-- ❌ **Estrategia para autenticación mediante JWT** - **NO EXISTE**
-  - No hay estrategia de Passport basada en JWT
-  - No se usa `passport-jwt`
-  - Aunque existe `generateToken()` y `verifyToken()` en `utils.js`, no hay estrategia de Passport que los use
+- ✅ **Estrategia para autenticación mediante JWT** - **IMPLEMENTADA**
+  - Estrategia "jwt" configurada (línea 79-99)
+  - Usa `JwtStrategy` de `passport-jwt`
+  - Extrae token del header `Authorization: Bearer <token>`
+  - Valida token y busca usuario en base de datos
+  - `passport-jwt` instalado en `package.json` (línea 26)
 
-**Estado:** ⚠️ **PARCIAL** - Faltan estrategias JWT de Passport.
+**Estado:** ✅ **CUMPLE** - Todas las estrategias requeridas están implementadas, incluyendo JWT.
 
 ---
 
@@ -73,19 +77,22 @@
 ### Requisitos:
 - ✅ **Sistema de login permite autenticarse** - Implementado
   - Ruta: `POST /api/sessions/login` (línea 11 de `session.router.js`)
-  - Usa estrategia "login" de Passport (línea 10 de `session.controllers.js`)
+  - Usa estrategia "login" de Passport (línea 11 de `session.controllers.js`)
 
-- ❌ **Generación de token JWT válido** - **NO CUMPLE**
-  - El login actual usa redirecciones HTML (`successRedirect`, `failureRedirect`)
-  - No genera ni devuelve token JWT al cliente
-  - Aunque existe `generateToken()` en `utils.js` (línea 20-30), **NO se usa en el login**
+- ✅ **Generación de token JWT válido** - **IMPLEMENTADO**
+  - El `loginController` genera token JWT usando `generateToken()` (línea 22)
+  - Retorna token en formato JSON (línea 33-37)
+  - Usa `{ session: false }` para trabajar con JWT en lugar de sesiones (línea 12)
+  - El token incluye: id, email, role (definido en `utils.js` línea 22-25)
+  - Expira en 24 horas (línea 28 de `utils.js`)
 
-- ❌ **Token JWT puede utilizarse para acciones protegidas** - **NO CUMPLE**
-  - No hay middleware que valide JWT
-  - No hay rutas protegidas que usen JWT
-  - El sistema actual usa sesiones de Express, no JWT
+- ✅ **Token JWT puede utilizarse para acciones protegidas** - **IMPLEMENTADO**
+  - Estrategia "jwt" en Passport valida tokens (línea 79-99 de `passport.config.js`)
+  - Estrategia "current" permite usar JWT para obtener usuario actual
+  - El token se envía en header: `Authorization: Bearer <token>`
+  - Las estrategias extraen y validan el token automáticamente
 
-**Estado:** ❌ **NO CUMPLE** - El login funciona pero no genera JWT ni permite usar tokens.
+**Estado:** ✅ **CUMPLE** - El login genera JWT y el token puede usarse para acciones protegidas.
 
 ---
 
@@ -94,32 +101,42 @@
 ### 5.1. Estrategia "current"
 **Archivo:** `src/config/passport.config.js`
 
-- ❌ **Estrategia "current" implementada** - **NO EXISTE**
-  - No hay estrategia llamada "current" configurada en Passport
+- ✅ **Estrategia "current" implementada** - **IMPLEMENTADA**
+  - Estrategia "current" configurada (línea 102-121)
+  - Usa `JwtStrategy` de `passport-jwt`
+  - Extrae token del header `Authorization: Bearer <token>`
 
-- ❌ **Extrae usuario asociado al token JWT** - **NO CUMPLE**
-  - No hay código que valide JWT y extraiga usuario
+- ✅ **Extrae usuario asociado al token JWT** - **IMPLEMENTADO**
+  - Valida el token JWT usando `JWT_SECRET`
+  - Busca usuario en base de datos usando `payload.id` (línea 111)
+  - Retorna el usuario completo si existe
 
-- ❌ **Maneja errores de token inválido o inexistente** - **NO CUMPLE**
-  - No hay validación de tokens
+- ✅ **Maneja errores de token inválido o inexistente** - **IMPLEMENTADO**
+  - Si el usuario no existe, retorna error (línea 112-114)
+  - Si hay error en la validación, retorna mensaje "Token inválido o expirado" (línea 117)
+  - Maneja errores con try-catch (línea 109-118)
 
 ### 5.2. Endpoint /api/sessions/current
 **Archivo:** `src/routes/session.router.js`
 
-- ❌ **Ruta /api/sessions/current existe** - **NO EXISTE**
-  - No hay ruta definida para `/current`
-  - Solo existen: `/register`, `/login`, `/github`, `/githubcallback`, `/logout`
+- ⚠️ **Ruta /api/sessions/current existe** - **PARCIAL**
+  - El controlador `currentController` existe en `src/controllers/current.controller.js`
+  - **FALTA:** Agregar la ruta en `session.router.js`
+  - **FALTA:** Mover `currentController` a `session.controllers.js` (recomendado)
 
-- ❌ **Valida usuario logueado** - **NO CUMPLE**
-  - No existe el endpoint
+- ⚠️ **Valida usuario logueado** - **PARCIAL**
+  - El controlador está implementado y usa la estrategia "current"
+  - **FALTA:** Agregar la ruta para que sea accesible
 
-- ❌ **Devuelve datos del usuario asociado al token JWT** - **NO CUMPLE**
-  - No existe el endpoint
+- ⚠️ **Devuelve datos del usuario asociado al token JWT** - **PARCIAL**
+  - El controlador retorna datos del usuario sin password (línea 21-28 de `current.controller.js`)
+  - **FALTA:** Agregar la ruta para que funcione
 
-- ❌ **Validación precisa y segura** - **NO CUMPLE**
-  - No hay implementación
+- ✅ **Validación precisa y segura** - **IMPLEMENTADO**
+  - Usa Passport con estrategia "current" para validar JWT
+  - Maneja errores apropiadamente (línea 6-18 de `current.controller.js`)
 
-**Estado:** ❌ **NO CUMPLE** - La estrategia "current" y el endpoint `/api/sessions/current` no están implementados.
+**Estado:** ⚠️ **PARCIAL** - La estrategia "current" está implementada y el controlador existe, pero falta agregar la ruta en el router.
 
 ---
 
@@ -127,33 +144,25 @@
 
 ### ✅ CUMPLE COMPLETAMENTE
 1. **Modelo de Usuario** - Todos los campos requeridos están presentes
-2. **Encriptación de Contraseña** - Funciona correctamente (aunque usa wrapper)
+2. **Encriptación de Contraseña** - Funciona correctamente usando `bcrypt.hashSync()`
+3. **Estrategias de Passport** - Todas las estrategias implementadas (register, login, github, jwt, current)
+4. **Estrategia JWT de Passport** - Implementada usando `passport-jwt`
+5. **Sistema de Login con JWT** - El login genera y retorna token JWT válido
+6. **Uso de Token en Rutas Protegidas** - Las estrategias JWT permiten usar tokens para autenticación
+7. **Estrategia "current"** - Implementada y configurada correctamente
 
-### ⚠️ PARCIAL / MEJORABLE
-1. **Uso directo de bcrypt.hashSync** - Se usa indirectamente a través de wrapper
-2. **Estrategias de Passport** - Existen estrategias básicas, pero falta JWT
-
-### ❌ NO CUMPLE
-1. **Estrategia JWT de Passport** - No existe estrategia basada en JWT usando `passport-jwt`
-2. **Sistema de Login con JWT** - El login NO genera token JWT
-3. **Uso de Token en Rutas Protegidas** - No se puede usar el token para acciones protegidas
-4. **Estrategia "current"** - No existe estrategia "current" de Passport
-5. **Endpoint /api/sessions/current** - La ruta NO existe y no devuelve datos del usuario
+### ⚠️ PARCIAL / PENDIENTE
+1. **Endpoint /api/sessions/current** - El controlador existe pero falta agregar la ruta en el router
 
 ---
 
 ## TAREAS PENDIENTES (Orden de Prioridad)
 
 ### Prioridad Alta (Requisitos Obligatorios):
-1. ❌ Instalar `passport-jwt` en `package.json`
-2. ❌ Crear estrategia JWT en `passport.config.js` usando `passport-jwt`
-3. ❌ Crear estrategia "current" en `passport.config.js`
-4. ❌ Modificar `loginController` para generar y retornar JWT en formato JSON
-5. ❌ Crear `currentController` en `session.controllers.js`
-6. ❌ Agregar ruta `GET /api/sessions/current` en `session.router.js`
-
-### Prioridad Media (Mejoras):
-7. ⚠️ Considerar usar `bcrypt.hashSync()` directamente en lugar de wrapper (opcional, depende del criterio del evaluador)
+1. ⚠️ Mover `currentController` de `current.controller.js` a `session.controllers.js` (recomendado para mantener todo junto)
+2. ❌ Agregar ruta `GET /api/sessions/current` en `session.router.js`
+3. ❌ Actualizar import en `session.router.js` para incluir `currentController` desde `session.controllers`
+4. ❌ Eliminar archivo `current.controller.js` después de mover el código
 
 ### Nota sobre Cart:
 - ✅ El campo `cart` está correctamente implementado como referencia
@@ -164,10 +173,9 @@
 
 ## ARCHIVOS QUE REQUIEREN MODIFICACIÓN
 
-1. **package.json** - Agregar `passport-jwt`
-2. **src/config/passport.config.js** - Agregar estrategias JWT y "current"
-3. **src/controllers/session.controllers.js** - Modificar login y agregar currentController
-4. **src/routes/session.router.js** - Agregar ruta `/current`
+1. **src/controllers/session.controllers.js** - Agregar `currentController` (mover desde `current.controller.js`)
+2. **src/routes/session.router.js** - Agregar import de `currentController` y ruta `GET /current`
+3. **src/controllers/current.controller.js** - Eliminar después de mover el código
 
 ## ARCHIVOS CON CÓDIGO ÚTIL EXISTENTE
 
@@ -176,6 +184,6 @@
 
 ---
 
-**Estado General del Proyecto:** ⚠️ **PARCIAL** - Requiere implementación de JWT y ruta `/current` para cumplir completamente con la consigna.
+**Estado General del Proyecto:** ⚠️ **CASI COMPLETO** - Solo falta agregar la ruta `/api/sessions/current` en el router. Todo lo demás está implementado correctamente.
 
-**Progreso:** 2/5 criterios principales cumplidos completamente.
+**Progreso:** 4/5 criterios principales cumplidos completamente. Solo falta completar el endpoint `/current`.
