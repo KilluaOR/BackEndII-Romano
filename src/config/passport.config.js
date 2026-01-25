@@ -3,7 +3,7 @@ import local from "passport-local";
 import GitHubStrategy from "passport-github2";
 import { createHash, isValidPassword } from "../utils.js";
 import userModel from "../dao/models/user.model.js";
-import { JwtStrategy, ExtractJwt } from "passport-jwt"
+import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt"
 
 const initializePassport = () => {
   const LocalStrategy = local.Strategy;
@@ -29,6 +29,7 @@ const initializePassport = () => {
             first_name: req.body.first_name,
             last_name: req.body.last_name,
             email: email,
+            age: req.body.age,
             password: createHash(password), //Hasheamos la contraseña
             role: email === "adminCoder@coder.com" ? "admin" : "user", //Sistema de roles
           };
@@ -120,44 +121,61 @@ passport.use(
   )
 );
 
-  //Estrategia GitHub
-  passport.use(
-    "github",
-    new GitHubStrategy(
-      {
-        clientID: process.env.GITHUB_CLIENT_ID,
-        clientSecret: process.env.GITHUB_CLIENT_SECRET,
-        callbackURL: process.env.GITHUB_CALLBACK_URL,
-      },
-      async (accessToken, refreshToken, profile, done) => {
-        try {
-          //Buscar usuario por email
-          console.log(profile);
-          let user = await userModel.findOne({ email: profile._json.email });
-          if (!user) {
-            //El usuario no existia en el sitio web, se lo agrega a la base de datos.
-            const nameParts = profile._json.name
-              ? profile._json.name.split(" ")
-              : ["", ""];
-            const newUser = {
-              first_name: nameParts[0] || profile._json.login,
-              last_name: nameParts.slice(1).join(" ") || "",
-              email: profile._json.email,
-              password: "", //GitHub no proporciona password
-              role: "user",
-            };
-            const result = await userModel.create(newUser);
-            done(null, result);
-          } else {
-            //El usuario ya existía
-            done(null, user);
+  //Estrategia GitHub (solo si están configuradas las variables de entorno)
+  if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET && process.env.GITHUB_CALLBACK_URL) {
+    passport.use(
+      "github",
+      new GitHubStrategy(
+        {
+          clientID: process.env.GITHUB_CLIENT_ID,
+          clientSecret: process.env.GITHUB_CLIENT_SECRET,
+          callbackURL: process.env.GITHUB_CALLBACK_URL,
+        },
+        async (accessToken, refreshToken, profile, done) => {
+          try {
+            //Buscar usuario por email
+            console.log(profile);
+            let user = await userModel.findOne({ email: profile._json.email });
+            if (!user) {
+              //El usuario no existia en el sitio web, se lo agrega a la base de datos.
+              const nameParts = profile._json.name
+                ? profile._json.name.split(" ")
+                : ["", ""];
+              const newUser = {
+                first_name: nameParts[0] || profile._json.login,
+                last_name: nameParts.slice(1).join(" ") || "",
+                email: profile._json.email,
+                age: 0,
+                password: "", //GitHub no proporciona password
+                role: "user",
+              };
+              const result = await userModel.create(newUser);
+              done(null, result);
+            } else {
+              //El usuario ya existía
+              done(null, user);
+            }
+          } catch (error) {
+            return done(error);
           }
-        } catch (error) {
-          return done(error);
         }
+      )
+    );
+  }
+
+    // Serialización y deserialización de usuarios
+    passport.serializeUser((user, done) => {
+      done(null, user._id);
+    });
+  
+    passport.deserializeUser(async (id, done) => {
+      try {
+        const user = await userModel.findById(id);
+        done(null, user);
+      } catch (error) {
+        done(error, null);
       }
-    )
-  );
+    });
 };
 
 export default initializePassport;

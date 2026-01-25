@@ -64,4 +64,37 @@ export const logoutController = (req, res) => {
         res.clearCookie("connect.sid");
         res.redirect("/login");
     });
-}
+};
+
+//Controlador para obtener el usuario actual mediante JWT
+export const currentController = async (req, res, next) => {
+    passport.authenticate("current", { session: false }, (err, user, info) => {
+        if (err) {
+            return res.status(500).json({
+                status: "error",
+                message: "Error en la autenticación",
+            });
+        }
+        if (!user) {
+            return res.status(401).json({
+                status: "error",
+                message: info?.message || "Token inválido o expirado",
+            });
+        }
+
+        //Retornar datos del usuario (sin password)
+        const userData = {
+            _id: user._id,
+            first_name: user.first_name,
+            last_name: user.last_name,
+            email: user.email,
+            age: user.age,
+            role: user.role,
+        };
+
+        return res.json({
+            status: "success",
+            user: userData,
+        });
+    })(req, res, next);
+};
