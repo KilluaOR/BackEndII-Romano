@@ -9,8 +9,6 @@ import passport from "passport";
 import initializePassport from "./config/passport.config.js";
 import sessions from "express-session";
 import usersRouter from "./routes/user.router.js";
-import productsRouter from "./routes/products.router.js";
-import { logger } from "./middlewares/logger.js";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 
@@ -42,7 +40,6 @@ app.set("view engine", "handlebars");
 // Middlewares incorporados de Express
 app.use(express.json()); // Formatea los cuerpos json de peticiones entrantes.
 app.use(express.urlencoded({ extended: true })); // Formatea query params de URLs para peticiones entrantes.
-app.use(logger);
 
 app.use(cookieParser(process.env.COOKIE_SECRET));
 
@@ -73,7 +70,6 @@ app.use("/api/sessions", sessionsRouter);
 app.use("/", viewsRouter);
 
 app.use("/api/users", usersRouter);
-app.use("/api/products", productsRouter);
 
 try {
   app.listen(PORT, () => {

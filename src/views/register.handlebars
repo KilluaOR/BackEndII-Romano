@@ -34,7 +34,7 @@
         button {
             width: 100%;
             padding: 12px;
-            background-color: #007bff;
+            background-color: #28a745;
             color: white;
             border: none;
             border-radius: 4px;
@@ -42,7 +42,7 @@
             font-size: 16px;
         }
         button:hover {
-            background-color: #0056b3;
+            background-color: #218838;
         }
         .message {
             padding: 10px;
@@ -69,7 +69,7 @@
         }
 </style>
     <div class="form-container">
-        <h1>Iniciar Sesión</h1>
+        <h1>Registro de Usuario</h1>
         
         {{#if error}}
         <div class="message error">{{error}}</div>
@@ -79,10 +79,25 @@
         <div class="message success">{{success}}</div>
         {{/if}}
         
-        <form id="loginForm">
+        <form id="registerForm">
+            <div class="form-group">
+                <label for="first_name">Nombre:</label>
+                <input type="text" id="first_name" name="first_name" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="last_name">Apellido:</label>
+                <input type="text" id="last_name" name="last_name" required>
+            </div>
+            
             <div class="form-group">
                 <label for="email">Email:</label>
                 <input type="email" id="email" name="email" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="age">Edad:</label>
+                <input type="number" id="age" name="age" min="1" required>
             </div>
             
             <div class="form-group">
@@ -90,39 +105,46 @@
                 <input type="password" id="password" name="password" required>
             </div>
             
-            <button type="submit">Iniciar Sesión</button>
+            <button type="submit">Registrarse</button>
         </form>
         
         <div class="link">
-            <p>¿No tienes cuenta? <a href="/register">Regístrate aquí</a></p>
+            <p>¿Ya tienes cuenta? <a href="/login">Inicia sesión aquí</a></p>
         </div>
     </div>
 
     <script>
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
+            const formData = {
+                first_name: document.getElementById('first_name').value,
+                last_name: document.getElementById('last_name').value,
+                email: document.getElementById('email').value,
+                age: parseInt(document.getElementById('age').value),
+                password: document.getElementById('password').value
+            };
             
             try {
-                const response = await fetch('/api/sessions/login', {
+                const response = await fetch('/api/sessions/register', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ email, password })
+                    body: JSON.stringify(formData)
                 });
                 
-                const data = await response.json();
-                
-                if (data.status === 'success') {
-                    // Guardar el token en localStorage
-                    localStorage.setItem('token', data.token);
-                    // Redirigir a home
-                    window.location.href = '/';
+                if (response.redirected) {
+                    // Si hay redirección, seguirla (el servidor maneja el registro)
+                    window.location.href = response.url;
                 } else {
-                    alert(data.message || 'Error al iniciar sesión');
+                    const data = await response.json();
+                    if (data.status === 'success') {
+                        alert('Usuario registrado correctamente');
+                        window.location.href = '/login';
+                    } else {
+                        alert(data.message || 'Error al registrar usuario');
+                    }
                 }
             } catch (error) {
                 alert('Error de conexión');
