@@ -17,9 +17,9 @@ export const getUserControllers = async (req, res) => {
 };
 
 export const createUserControllers = async (req, res) => {
-  const { name, age, email } = req.body;
+  const { first_name, last_name, age, email } = req.body;
   try {
-    const result = await userModel.create({ name, age, email });
+    const result = await userModel.create({ first_name, last_name, age, email });
     res.send({
       status: "success",
       payload: result,
@@ -33,13 +33,15 @@ export const createUserControllers = async (req, res) => {
 };
 
 export const updateUserControllers = async (req, res) => {
-  const { name, age, email } = req.body;
+  const { uid } = req.params;
+  const { first_name, last_name, age, email } = req.body;
   try {
     const user = await userModel.findOne({ _id: uid });
     if (!user) throw new Error("User not found");
 
     const newUser = {
-      name: name ?? user.name,
+      first_name: first_name ?? user.first_name,
+      last_name: last_name ?? user.last_name,
       age: age ?? user.age,
       email: email ?? user.email,
     };

@@ -37,6 +37,9 @@ app.engine("handlebars", handlebars.engine());
 app.set("views", __dirname + "/views");
 app.set("view engine", "handlebars");
 
+// Servir archivos estáticos desde la carpeta public
+app.use(express.static(__dirname + "/public"));
+
 // Middlewares incorporados de Express
 app.use(express.json()); // Formatea los cuerpos json de peticiones entrantes.
 app.use(express.urlencoded({ extended: true })); // Formatea query params de URLs para peticiones entrantes.
@@ -51,7 +54,7 @@ app.use(
     saveUninitialized: false, //No crear sesión hasta que se almacene algo
     store: MongoStore.create({
       mongoUrl: process.env.MONGO_URI, //Guardar sessions en mongodb
-      ttl: 3600, //Tirmpo de vida de la sesión en seg(1h)
+      ttl: 3600, //Tiempo de vida de la sesión en seg(1h)
     }),
   })
 );
@@ -59,10 +62,6 @@ app.use(
 //Middleware de passport
 app.use(passport.initialize());
 app.use(passport.session());
-
-app.get("/setcookies", (req, res) => {
-  res.cookie("");
-});
 
 //Rutas de sesión
 app.use("/api/sessions", sessionsRouter);

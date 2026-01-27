@@ -50,10 +50,23 @@ export const githubController = passport.authenticate("github", {
 });
 
 //Controlador callback de GitHub
-export const githubCallbackController = passport.authenticate("github", {
-    failureRedirect: "/login?error=Error al autenticar con GitHub",
-    successRedirect: "/current",
-});
+export const githubCallbackController = async (req, res, next) => {
+    passport.authenticate("github", { session: true }, async (err, user, info) => {
+        try {
+            if (err || !user) {
+                return res.redirect("/login?error=Error al autenticar con GitHub");
+            }
+
+            // Generar token JWT para el usuario autenticado con GitHub
+            const token = generateToken(user);
+
+            // Redirigir a home con el token en query parameter para que el frontend lo guarde
+            return res.redirect(`/?token=${token}`);
+        } catch (error) {
+            return res.redirect("/login?error=Error al procesar autenticación con GitHub");
+        }
+    })(req, res, next);
+};
 
 //Controlador logout
 export const logoutController = (req, res) => {

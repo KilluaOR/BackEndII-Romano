@@ -3,6 +3,7 @@ import local from "passport-local";
 import GitHubStrategy from "passport-github2";
 import { createHash, isValidPassword } from "../utils.js";
 import userModel from "../dao/models/user.model.js";
+import cartModel from "../dao/models/cart.model.js";
 import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt"
 
 const initializePassport = () => {
@@ -24,13 +25,17 @@ const initializePassport = () => {
             return done(null, false, { message: "El usuario ya existe" });
           }
 
-          //Crear un nuevo usuario
+          //Crear un carrito para el nuevo usuario
+          const newCart = await cartModel.create({ products: [] });
+          
+          //Crear un nuevo usuario con referencia al carrito
           const newUser = {
             first_name: req.body.first_name,
             last_name: req.body.last_name,
             email: email,
             age: req.body.age,
             password: createHash(password), //Hasheamos la contraseña
+            cart: newCart._id, // Referencia al carrito creado
             role: email === "adminCoder@coder.com" ? "admin" : "user", //Sistema de roles
           };
 
@@ -59,7 +64,7 @@ const initializePassport = () => {
             return done(null, false, { message: "Usuario no encontrado" });
           }
 
-          //Valiar contraseña
+          //Validar contraseña
           if (!isValidPassword(user, password)) {
             return done(null, false, { message: "Contraseña incorrecta" });
           }
@@ -77,49 +82,49 @@ const initializePassport = () => {
     )
   );
 
-//Estrategia JWT
-passport.use(
-  "jwt",
-  new JwtStrategy(
-    {
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey: process.env.JWT_SECRET,
-    },
-    async (payload, done) => {
-      try {
-        const user = await userModel.findById(payload.id);
-        if (!user) {
-          return done(null, false, { message: "Usuario no encontrado" })
-        } 
-        return done(null, user);
+  //Estrategia JWT
+  passport.use(
+    "jwt",
+    new JwtStrategy(
+      {
+        jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+        secretOrKey: process.env.JWT_SECRET,
+      },
+      async (payload, done) => {
+        try {
+          const user = await userModel.findById(payload.id);
+          if (!user) {
+            return done(null, false, { message: "Usuario no encontrado" })
+          } 
+          return done(null, user);
         } catch (error) {
           return done(error)
-      }
-    }
-  )
-);
-
-//Estrategia current para validar usuario desde JWT
-passport.use(
-  "current",
-  new JwtStrategy(
-    {
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-        secretOrKey: process.env.JWT_SECRET,
-    },
-    async (payload, done) => {
-      try {
-        const user = await userModel.findById(payload.id);
-        if (!user) {
-          return done(null, false, { message: "Usuario no encontrado" });
         }
-        return done(null, user);
-      } catch (error) {
-        return done(error, false, { message: "Token inválido o expirado" })
       }
-    }
-  )
-);
+    )
+  );
+
+  //Estrategia current para validar usuario desde JWT
+  passport.use(
+    "current",
+    new JwtStrategy(
+      {
+        jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+        secretOrKey: process.env.JWT_SECRET,
+      },
+      async (payload, done) => {
+        try {
+          const user = await userModel.findById(payload.id);
+          if (!user) {
+            return done(null, false, { message: "Usuario no encontrado" });
+          }
+          return done(null, user);
+        } catch (error) {
+          return done(error, false, { message: "Token inválido o expirado" })
+        }
+      }
+    )
+  );
 
   //Estrategia GitHub (solo si están configuradas las variables de entorno)
   if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET && process.env.GITHUB_CALLBACK_URL) {
@@ -141,12 +146,17 @@ passport.use(
               const nameParts = profile._json.name
                 ? profile._json.name.split(" ")
                 : ["", ""];
+              
+              //Crear un carrito para el nuevo usuario
+              const newCart = await cartModel.create({ products: [] });
+              
               const newUser = {
                 first_name: nameParts[0] || profile._json.login,
                 last_name: nameParts.slice(1).join(" ") || "",
                 email: profile._json.email,
                 age: 0,
                 password: "", //GitHub no proporciona password
+                cart: newCart._id, // Referencia al carrito creado
                 role: "user",
               };
               const result = await userModel.create(newUser);

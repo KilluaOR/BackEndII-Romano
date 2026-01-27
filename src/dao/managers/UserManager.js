@@ -16,7 +16,7 @@ export default class UserManager {
 
       const updatedUser = await UserModel.findByIdAndUpdate(
         id,
-        updatedFieldss,
+        updatedFields,
         { new: true }
       ).lean();
 
